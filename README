@@ -1,0 +1,6 @@
+We test the new teal opcodes `mimc_BN254`, `mimc_BLS12_381` added to a fork
+of go-algorand.
+
+Run `make` to run the test; a private net as per the parameters at the top of
+devnet.py has to be running with the forked node.
+

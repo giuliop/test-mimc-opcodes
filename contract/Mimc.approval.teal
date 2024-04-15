@@ -1,0 +1,209 @@
+#pragma version 11
+
+mimc.Mimc.approval_program:
+    // contract/mimc.py:8
+    // class Mimc(py.ARC4Contract):
+    txn NumAppArgs
+    bz main_bare_routing@6
+    method "mimc_BN254(byte[32][])byte[32]"
+    method "mimc_BLS12_381(byte[32][])byte[32]"
+    txna ApplicationArgs 0
+    match main_mimc_BN254_route@2 main_mimc_BLS12_381_route@3
+    err // reject transaction
+
+main_mimc_BN254_route@2:
+    // contract/mimc.py:13
+    // @abimethod
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    // contract/mimc.py:8
+    // class Mimc(py.ARC4Contract):
+    txna ApplicationArgs 1
+    // contract/mimc.py:13
+    // @abimethod
+    callsub mimc_BN254
+    byte 0x151f7c75
+    swap
+    concat
+    log
+    int 1
+    return
+
+main_mimc_BLS12_381_route@3:
+    // contract/mimc.py:23
+    // @abimethod
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    // contract/mimc.py:8
+    // class Mimc(py.ARC4Contract):
+    txna ApplicationArgs 1
+    // contract/mimc.py:23
+    // @abimethod
+    callsub mimc_BLS12_381
+    byte 0x151f7c75
+    swap
+    concat
+    log
+    int 1
+    return
+
+main_bare_routing@6:
+    // contract/mimc.py:8
+    // class Mimc(py.ARC4Contract):
+    txn OnCompletion
+    switch main_barecall@7 main_reject_bare_on_completion@8 main_reject_bare_on_completion@8 main_reject_bare_on_completion@8 main_barecall@7 main_barecall@7
+    err // reject transaction
+
+main_barecall@7:
+    // contract/mimc.py:9-10
+    // @baremethod(create='allow', allow_actions=['UpdateApplication', 'DeleteApplication', 'NoOp'])
+    // def barecall(self) -> None:
+    callsub barecall
+    int 1
+    return
+
+main_reject_bare_on_completion@8:
+    // contract/mimc.py:8
+    // class Mimc(py.ARC4Contract):
+    err // reject transaction
+
+
+// mimc.Mimc.mimc_BN254(data: bytes) -> bytes:
+mimc_BN254:
+    // contract/mimc.py:13-14
+    // @abimethod
+    // def mimc_BN254(self, data: DynamicArray[Bytes32]) -> Bytes32:
+    proto 1 1
+    byte ""
+    // contract/mimc.py:15
+    // tohash = py.Bytes()
+    dup
+    // contract/mimc.py:16
+    // for i in py.urange(data.length):
+    frame_dig -1
+    int 0
+    extract_uint16
+    int 0
+
+mimc_BN254_for_header@1:
+    // contract/mimc.py:16
+    // for i in py.urange(data.length):
+    frame_dig 3
+    frame_dig 2
+    <
+    dup
+    frame_bury 0
+    bz mimc_BN254_after_for@5
+    // contract/mimc.py:17
+    // tohash += data[i].bytes
+    frame_dig 0
+    assert // Index access is out of bounds
+    frame_dig -1
+    extract 2 0
+    frame_dig 3
+    dup
+    cover 2
+    int 32
+    *
+    int 32
+    extract3
+    frame_dig 1
+    swap
+    concat
+    frame_bury 1
+    // contract/mimc.py:16
+    // for i in py.urange(data.length):
+    int 1
+    +
+    frame_bury 3
+    b mimc_BN254_for_header@1
+
+mimc_BN254_after_for@5:
+    // contract/mimc.py:18-20
+    // # we use the sha opcode as a placeholder to make puyapy compile,
+    // # then we substitute it with the new mimc_BN254 in the compiled teal
+    // result = py.op.mimc_BN254(tohash)
+    frame_dig 1
+    mimc_BN254
+    // contract/mimc.py:21
+    // return Bytes32.from_bytes(result)
+    frame_bury 0
+    retsub
+
+
+// mimc.Mimc.mimc_BLS12_381(data: bytes) -> bytes:
+mimc_BLS12_381:
+    // contract/mimc.py:23-24
+    // @abimethod
+    // def mimc_BLS12_381(self, data: DynamicArray[Bytes32]) -> Bytes32:
+    proto 1 1
+    byte ""
+    // contract/mimc.py:25
+    // tohash = py.Bytes()
+    dup
+    // contract/mimc.py:26
+    // for i in py.urange(data.length):
+    frame_dig -1
+    int 0
+    extract_uint16
+    int 0
+
+mimc_BLS12_381_for_header@1:
+    // contract/mimc.py:26
+    // for i in py.urange(data.length):
+    frame_dig 3
+    frame_dig 2
+    <
+    dup
+    frame_bury 0
+    bz mimc_BLS12_381_after_for@5
+    // contract/mimc.py:27
+    // tohash += data[i].bytes
+    frame_dig 0
+    assert // Index access is out of bounds
+    frame_dig -1
+    extract 2 0
+    frame_dig 3
+    dup
+    cover 2
+    int 32
+    *
+    int 32
+    extract3
+    frame_dig 1
+    swap
+    concat
+    frame_bury 1
+    // contract/mimc.py:26
+    // for i in py.urange(data.length):
+    int 1
+    +
+    frame_bury 3
+    b mimc_BLS12_381_for_header@1
+
+mimc_BLS12_381_after_for@5:
+    // contract/mimc.py:28-30
+    // # we use the keccak opcode as a placeholder to make puyapy compile,
+    // # then we substitute it with the new mimc_BLS12_381 in the compiled teal
+    // result = py.op.mimc_BLS12_381(tohash)
+    frame_dig 1
+    mimc_BLS12_381
+    // contract/mimc.py:31
+    // return Bytes32.from_bytes(result)
+    frame_bury 0
+    retsub
+
+
+// mimc.Mimc.barecall() -> void:
+barecall:
+    // contract/mimc.py:9-10
+    // @baremethod(create='allow', allow_actions=['UpdateApplication', 'DeleteApplication', 'NoOp'])
+    // def barecall(self) -> None:
+    proto 0 0
+    retsub
