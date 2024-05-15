@@ -16,12 +16,12 @@ $(MIMC): contract/mimc.py
 	perl -i -pe 's/version 10/version 11/g' contract/mimc.clear.teal
 
 	@echo ""
-	# substitute 'sha256' with 'mimc_BN254' in mimc.approval.teal
-	perl -i -pe 's/sha256/mimc_BN254/g' contract/mimc.approval.teal
+	# substitute 'sha256' with 'mimc BN254g1' in mimc.approval.teal
+	perl -i -pe 's/sha256/mimc BN254g1/g' contract/mimc.approval.teal
 
 	@echo ""
-	# substitute 'keccak256' with 'mimc_BLS12_381' in mimc.approval.teal
-	perl -i -pe 's/keccak256/mimc_BLS12_381/g' contract/mimc.approval.teal
+	# substitute 'keccak256' with 'mimc BLS12_381g1' in mimc.approval.teal
+	perl -i -pe 's/keccak256/mimc BLS12_381g1/g' contract/mimc.approval.teal
 
 compile: $(MIMC)
 

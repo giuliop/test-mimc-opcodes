@@ -12,7 +12,7 @@ from algosdk.v2client.models import (
 
 
 ################ CONFIGURATION FOR DEVNET - EDIT AS NEEDED #################`
-devnet_dir = os.path.expanduser("~/.algorand/devnet/MainNode")
+devnet_dir = os.path.expanduser("~/.algorand/devnet/data")
 kmd_dir = devnet_dir + "/kmd-v0.5"
 kmd_port = 7833
 ############################################################################
@@ -24,19 +24,28 @@ print(f"Configuring algod and kmd clients, using configuration parameters:\n"
       f"  * kmd directory: {kmd_dir}\n"
       f"  * kmd port: {kmd_port}\n")
 try:
+    result = subprocess.run(["goal", "kmd", "start", "-t", "5", "-d", devnet_dir],
+                    check=True, capture_output=True)
+    print(result.stdout.decode('utf-8'))
+
     with open(devnet_dir + "/algod.token", "r") as f:
         devnet_token = f.read().strip()
+
     with open(devnet_dir + "/algod.net", "r") as f:
         devnet_address = f"http://{f.read().strip()}"
-        kmd_address  = f"http://{f.read().strip().split(':')[0]}:{kmd_port}"
+        kmd_address  = f"{devnet_address.rsplit(':', 1)[0]}:{kmd_port}"
+    try:
+        with open(kmd_dir + "/kmd.net", "r") as f:
+            kmd_address = f"http://{f.read().strip()}"
+    except FileNotFoundError:
+        print(f"kmd.net file not found, using default {kmd_address}")
+
     with open(kmd_dir + "/kmd.token", "r") as f:
         kmd_token = f.read().strip()
 
     algod = sdk.v2client.algod.AlgodClient(devnet_token, devnet_address)
     kmd = sdk.kmd.KMDClient(kmd_token, kmd_address)
 
-    subprocess.run(["goal", "kmd", "start", "-t", "5", "-d", devnet_dir],
-                    check=True, capture_output=True)
     wallet = kmd.list_wallets()[0]["id"]
     wallet_handle = kmd.init_wallet_handle(wallet, "")
     pk = kmd.list_keys(wallet_handle)[0]
@@ -45,8 +54,12 @@ try:
     print(f"Its balance is: {algod.account_info(pk)['amount'] // 10**6} algo\n")
 
 except Exception as e:
-    print(e)
     print("Error setting up clients, check configuration")
+    print("Algod address: ", devnet_address)
+    print("KMD address: ", kmd_address)
+    print("Algod token: ", devnet_token)
+    print("KMD token: ", kmd_token)
+    print(e)
     exit()
 
 def compile(filename):

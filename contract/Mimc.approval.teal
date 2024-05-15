@@ -5,8 +5,8 @@ mimc.Mimc.approval_program:
     // class Mimc(py.ARC4Contract):
     txn NumAppArgs
     bz main_bare_routing@6
-    method "mimc_BN254(byte[32][])byte[32]"
-    method "mimc_BLS12_381(byte[32][])byte[32]"
+    method "mimc_BN254(byte[])byte[32]"
+    method "mimc_BLS12_381(byte[])byte[32]"
     txna ApplicationArgs 0
     match main_mimc_BN254_route@2 main_mimc_BLS12_381_route@3
     err // reject transaction
@@ -22,6 +22,7 @@ main_mimc_BN254_route@2:
     // contract/mimc.py:8
     // class Mimc(py.ARC4Contract):
     txna ApplicationArgs 1
+    extract 2 0
     // contract/mimc.py:13
     // @abimethod
     callsub mimc_BN254
@@ -33,7 +34,7 @@ main_mimc_BN254_route@2:
     return
 
 main_mimc_BLS12_381_route@3:
-    // contract/mimc.py:23
+    // contract/mimc.py:20
     // @abimethod
     txn OnCompletion
     !
@@ -43,7 +44,8 @@ main_mimc_BLS12_381_route@3:
     // contract/mimc.py:8
     // class Mimc(py.ARC4Contract):
     txna ApplicationArgs 1
-    // contract/mimc.py:23
+    extract 2 0
+    // contract/mimc.py:20
     // @abimethod
     callsub mimc_BLS12_381
     byte 0x151f7c75
@@ -78,125 +80,33 @@ main_reject_bare_on_completion@8:
 mimc_BN254:
     // contract/mimc.py:13-14
     // @abimethod
-    // def mimc_BN254(self, data: DynamicArray[Bytes32]) -> Bytes32:
+    // def mimc_BN254(self, data: py.Bytes) -> Bytes32:
     proto 1 1
-    byte ""
-    // contract/mimc.py:15
-    // tohash = py.Bytes()
-    dup
-    // contract/mimc.py:16
-    // for i in py.urange(data.length):
-    frame_dig -1
-    int 0
-    extract_uint16
-    int 0
-
-mimc_BN254_for_header@1:
-    // contract/mimc.py:16
-    // for i in py.urange(data.length):
-    frame_dig 3
-    frame_dig 2
-    <
-    dup
-    frame_bury 0
-    bz mimc_BN254_after_for@5
-    // contract/mimc.py:17
-    // tohash += data[i].bytes
-    frame_dig 0
-    assert // Index access is out of bounds
-    frame_dig -1
-    extract 2 0
-    frame_dig 3
-    dup
-    cover 2
-    int 32
-    *
-    int 32
-    extract3
-    frame_dig 1
-    swap
-    concat
-    frame_bury 1
-    // contract/mimc.py:16
-    // for i in py.urange(data.length):
-    int 1
-    +
-    frame_bury 3
-    b mimc_BN254_for_header@1
-
-mimc_BN254_after_for@5:
-    // contract/mimc.py:18-20
+    // contract/mimc.py:15-17
     // # we use the sha opcode as a placeholder to make puyapy compile,
-    // # then we substitute it with the new mimc_BN254 in the compiled teal
-    // result = py.op.mimc_BN254(tohash)
-    frame_dig 1
-    mimc_BN254
-    // contract/mimc.py:21
+    // # then we substitute it with the new mimc BN254g1 in the compiled teal
+    // result = py.op.mimc BN254g1(data)
+    frame_dig -1
+    mimc BN254g1
+    // contract/mimc.py:18
     // return Bytes32.from_bytes(result)
-    frame_bury 0
     retsub
 
 
 // mimc.Mimc.mimc_BLS12_381(data: bytes) -> bytes:
 mimc_BLS12_381:
-    // contract/mimc.py:23-24
+    // contract/mimc.py:20-21
     // @abimethod
-    // def mimc_BLS12_381(self, data: DynamicArray[Bytes32]) -> Bytes32:
+    // def mimc_BLS12_381(self, data: py.Bytes) -> Bytes32:
     proto 1 1
-    byte ""
-    // contract/mimc.py:25
-    // tohash = py.Bytes()
-    dup
-    // contract/mimc.py:26
-    // for i in py.urange(data.length):
-    frame_dig -1
-    int 0
-    extract_uint16
-    int 0
-
-mimc_BLS12_381_for_header@1:
-    // contract/mimc.py:26
-    // for i in py.urange(data.length):
-    frame_dig 3
-    frame_dig 2
-    <
-    dup
-    frame_bury 0
-    bz mimc_BLS12_381_after_for@5
-    // contract/mimc.py:27
-    // tohash += data[i].bytes
-    frame_dig 0
-    assert // Index access is out of bounds
-    frame_dig -1
-    extract 2 0
-    frame_dig 3
-    dup
-    cover 2
-    int 32
-    *
-    int 32
-    extract3
-    frame_dig 1
-    swap
-    concat
-    frame_bury 1
-    // contract/mimc.py:26
-    // for i in py.urange(data.length):
-    int 1
-    +
-    frame_bury 3
-    b mimc_BLS12_381_for_header@1
-
-mimc_BLS12_381_after_for@5:
-    // contract/mimc.py:28-30
+    // contract/mimc.py:22-24
     // # we use the keccak opcode as a placeholder to make puyapy compile,
-    // # then we substitute it with the new mimc_BLS12_381 in the compiled teal
-    // result = py.op.mimc_BLS12_381(tohash)
-    frame_dig 1
-    mimc_BLS12_381
-    // contract/mimc.py:31
+    // # then we substitute it with the new mimc BLS12_381g1 in the compiled teal
+    // result = py.op.mimc BLS12_381g1(data)
+    frame_dig -1
+    mimc BLS12_381g1
+    // contract/mimc.py:25
     // return Bytes32.from_bytes(result)
-    frame_bury 0
     retsub
 
 
