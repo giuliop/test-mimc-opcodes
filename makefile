@@ -17,11 +17,11 @@ $(MIMC): contract/mimc.py
 
 	@echo ""
 	# substitute 'sha256' with 'mimc BN254g1' in mimc.approval.teal
-	perl -i -pe 's/sha256/mimc BN254g1/g' contract/mimc.approval.teal
+	perl -i -pe 's/sha256/mimc BN254_MP_110/g' contract/mimc.approval.teal
 
 	@echo ""
 	# substitute 'keccak256' with 'mimc BLS12_381g1' in mimc.approval.teal
-	perl -i -pe 's/keccak256/mimc BLS12_381g1/g' contract/mimc.approval.teal
+	perl -i -pe 's/keccak256/mimc BLS12_381_MP_111/g' contract/mimc.approval.teal
 
 compile: $(MIMC)
 

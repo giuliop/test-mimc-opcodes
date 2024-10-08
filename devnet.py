@@ -12,7 +12,7 @@ from algosdk.v2client.models import (
 
 
 ################ CONFIGURATION FOR DEVNET - EDIT AS NEEDED #################`
-devnet_dir = os.path.expanduser("~/.algorand/devnet/data")
+devnet_dir = os.path.expanduser("~/dev/algorand/devnet/network/data")
 kmd_dir = devnet_dir + "/kmd-v0.5"
 kmd_port = 7833
 ############################################################################

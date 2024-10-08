@@ -6,13 +6,13 @@ import devnet as dev
 mimc_BN254Nonsense = """
 #pragma version 11
 pushbytes 0x11223344556677889900aabbccddeeff11223344556677889900aabbccddeeff
-mimc_BN254
+mimc BN254_MP_110
 """
 
 mimc_BLS12_381Nonsense = """
 #pragma version 11
 pushbytes 0x11223344556677889900aabbccddeeff11223344556677889900aabbccddeeff
-mimc_BLS12_381
+mimc BLS12_381_MP_111
 """
 
 compiled_mimc_BN254Nonsense = b64decode(

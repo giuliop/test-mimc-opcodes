@@ -1,17 +1,25 @@
 #pragma version 11
 
 mimc.Mimc.approval_program:
+    callsub __puya_arc4_router__
+    return
+
+
+// mimc.Mimc.__puya_arc4_router__() -> uint64:
+__puya_arc4_router__:
     // contract/mimc.py:8
     // class Mimc(py.ARC4Contract):
+    proto 0 1
     txn NumAppArgs
-    bz main_bare_routing@6
+    bz __puya_arc4_router___bare_routing@6
     method "mimc_BN254(byte[])byte[32]"
     method "mimc_BLS12_381(byte[])byte[32]"
     txna ApplicationArgs 0
-    match main_mimc_BN254_route@2 main_mimc_BLS12_381_route@3
-    err // reject transaction
+    match __puya_arc4_router___mimc_BN254_route@2 __puya_arc4_router___mimc_BLS12_381_route@3
+    int 0
+    retsub
 
-main_mimc_BN254_route@2:
+__puya_arc4_router___mimc_BN254_route@2:
     // contract/mimc.py:13
     // @abimethod
     txn OnCompletion
@@ -31,9 +39,9 @@ main_mimc_BN254_route@2:
     concat
     log
     int 1
-    return
+    retsub
 
-main_mimc_BLS12_381_route@3:
+__puya_arc4_router___mimc_BLS12_381_route@3:
     // contract/mimc.py:20
     // @abimethod
     txn OnCompletion
@@ -53,27 +61,28 @@ main_mimc_BLS12_381_route@3:
     concat
     log
     int 1
-    return
+    retsub
 
-main_bare_routing@6:
+__puya_arc4_router___bare_routing@6:
     // contract/mimc.py:8
     // class Mimc(py.ARC4Contract):
     txn OnCompletion
-    switch main_barecall@7 main_reject_bare_on_completion@8 main_reject_bare_on_completion@8 main_reject_bare_on_completion@8 main_barecall@7 main_barecall@7
-    err // reject transaction
+    switch __puya_arc4_router___barecall@7 __puya_arc4_router___after_if_else@10 __puya_arc4_router___after_if_else@10 __puya_arc4_router___after_if_else@10 __puya_arc4_router___barecall@7 __puya_arc4_router___barecall@7
+    int 0
+    retsub
 
-main_barecall@7:
+__puya_arc4_router___barecall@7:
     // contract/mimc.py:9-10
     // @baremethod(create='allow', allow_actions=['UpdateApplication', 'DeleteApplication', 'NoOp'])
     // def barecall(self) -> None:
-    callsub barecall
     int 1
-    return
+    retsub
 
-main_reject_bare_on_completion@8:
+__puya_arc4_router___after_if_else@10:
     // contract/mimc.py:8
     // class Mimc(py.ARC4Contract):
-    err // reject transaction
+    int 0
+    retsub
 
 
 // mimc.Mimc.mimc_BN254(data: bytes) -> bytes:
@@ -85,9 +94,9 @@ mimc_BN254:
     // contract/mimc.py:15-17
     // # we use the sha opcode as a placeholder to make puyapy compile,
     // # then we substitute it with the new mimc BN254g1 in the compiled teal
-    // result = py.op.mimc BN254g1(data)
+    // result = py.op.mimc BN254_MP_110(data)
     frame_dig -1
-    mimc BN254g1
+    mimc BN254_MP_110
     // contract/mimc.py:18
     // return Bytes32.from_bytes(result)
     retsub
@@ -102,18 +111,9 @@ mimc_BLS12_381:
     // contract/mimc.py:22-24
     // # we use the keccak opcode as a placeholder to make puyapy compile,
     // # then we substitute it with the new mimc BLS12_381g1 in the compiled teal
-    // result = py.op.mimc BLS12_381g1(data)
+    // result = py.op.mimc BLS12_381_MP_111(data)
     frame_dig -1
-    mimc BLS12_381g1
+    mimc BLS12_381_MP_111
     // contract/mimc.py:25
     // return Bytes32.from_bytes(result)
-    retsub
-
-
-// mimc.Mimc.barecall() -> void:
-barecall:
-    // contract/mimc.py:9-10
-    // @baremethod(create='allow', allow_actions=['UpdateApplication', 'DeleteApplication', 'NoOp'])
-    // def barecall(self) -> None:
-    proto 0 0
     retsub

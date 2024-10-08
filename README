@@ -1,5 +1,4 @@
-We test the new teal opcodes `mimc_BN254`, `mimc_BLS12_381` added to a fork
-of go-algorand.
+We test the new teal opcode `mimc` added to a fork of go-algorand.
 
 Run `make` to run the test; a private net as per the parameters at the top of
 devnet.py has to be running with the forked node.
@@ -8,4 +7,3 @@ The makefile assumes you are using pipenv; if you are managing your python
 enviroment some other way then you can either modify the makefile or use
 `make compile` and then run main.py; just make sure the official python sdk
 is available.
-

@@ -1,7 +1,5 @@
 #pragma version 11
 
 mimc.Mimc.clear_state_program:
-    // contract/mimc.py:8
-    // class Mimc(py.ARC4Contract):
     int 1
     return
