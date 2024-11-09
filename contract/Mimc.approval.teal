@@ -94,9 +94,9 @@ mimc_BN254:
     // contract/mimc.py:15-17
     // # we use the sha opcode as a placeholder to make puyapy compile,
     // # then we substitute it with the new mimc BN254g1 in the compiled teal
-    // result = py.op.mimc BN254_MP_110(data)
+    // result = py.op.mimc BN254Mp110(data)
     frame_dig -1
-    mimc BN254_MP_110
+    mimc BN254Mp110
     // contract/mimc.py:18
     // return Bytes32.from_bytes(result)
     retsub
@@ -111,9 +111,9 @@ mimc_BLS12_381:
     // contract/mimc.py:22-24
     // # we use the keccak opcode as a placeholder to make puyapy compile,
     // # then we substitute it with the new mimc BLS12_381g1 in the compiled teal
-    // result = py.op.mimc BLS12_381_MP_111(data)
+    // result = py.op.mimc BLS12_381Mp111(data)
     frame_dig -1
-    mimc BLS12_381_MP_111
+    mimc BLS12_381Mp111
     // contract/mimc.py:25
     // return Bytes32.from_bytes(result)
     retsub

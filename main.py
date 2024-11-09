@@ -21,7 +21,7 @@ def run_test():
         local_schema=sdk.transaction.StateSchema(num_uints=0, num_byte_slices=0),
     )
     app_id = dev.send_txn(app_create_txn)['application-index']
-    print(f"Mimc contracrt created with app_id: {app_id}")
+    print(f"Mimc contract created with app_id: {app_id}")
 
     # test the contract
     for curve in ["BN254", "BLS12_381"]:
