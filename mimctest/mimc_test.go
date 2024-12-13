@@ -1,56 +1,20 @@
-package main
+package testmimc
 
 import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/consensys/gnark/backend/plonk"
+	"github.com/consensys/gnark/backend/witness"
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/frontend/cs/scs"
 	"github.com/consensys/gnark/std/hash/mimc"
-	ap "github.com/giuliop/algoplonk"
-	"github.com/giuliop/algoplonk/setup"
+	"github.com/consensys/gnark/test/unsafekzg"
 )
-
-func main() {
-	for _, curve := range []ecc.ID{ecc.BN254, ecc.BLS12_381} {
-		ccOneInput, err := ap.Compile(&CircuitOneInput{}, curve, setup.Trusted)
-		if err != nil {
-			panic(err)
-		}
-		ccThreeInputs, err := ap.Compile(&CircuitThreeInputs{}, curve,
-			setup.Trusted)
-		if err != nil {
-			panic(err)
-		}
-
-		curveIndex := 0
-		if curve == ecc.BLS12_381 {
-			curveIndex = 1
-		}
-		for _, test := range tests {
-			if len(test.preimages) == 1 {
-				assignment := &CircuitOneInput{Secret: test.preimages[0].Bytes(),
-					Hash: test.hashCheck[curveIndex].value.Bytes()}
-				_, err := ccOneInput.Verify(assignment)
-				if err != nil {
-					panic(err)
-				}
-			} else if len(test.preimages) == 3 {
-				assignment := &CircuitThreeInputs{Secret1: test.preimages[0].Bytes(),
-					Secret2: test.preimages[1].Bytes(),
-					Secret3: test.preimages[2].Bytes(),
-					Hash:    test.hashCheck[curveIndex].value.Bytes()}
-				_, err := ccThreeInputs.Verify(assignment)
-				if err != nil {
-					panic(err)
-				}
-			} else {
-				panic("unsupported number of preimages")
-			}
-		}
-	}
-}
 
 type ValueWithBase struct {
 	value string
@@ -204,12 +168,58 @@ var tests = []Test{
 	},
 }
 
-type CircuitOneInput struct {
+func TestMimc(t *testing.T) {
+	for _, curve := range []ecc.ID{ecc.BN254, ecc.BLS12_381} {
+		ccOneInput, err := compileCircuit(&CircuitMimcHashOneInput{}, curve)
+		if err != nil {
+			panic(err)
+		}
+		ccThreeInputs, err := compileCircuit(&CircuitMimcHashThreeInputs{}, curve)
+		if err != nil {
+			panic(err)
+		}
+
+		curveIndex := 0
+		if curve == ecc.BLS12_381 {
+			curveIndex = 1
+		}
+		for _, test := range tests {
+			if len(test.preimages) == 1 {
+				assignment := &CircuitMimcHashOneInput{Secret: test.preimages[0].Bytes(),
+					Hash: test.hashCheck[curveIndex].value.Bytes()}
+				_, err := ccOneInput.Verify(assignment)
+				if err != nil {
+					panic(err)
+				}
+			} else if len(test.preimages) == 3 {
+				assignment := &CircuitMimcHashThreeInputs{Secret1: test.preimages[0].Bytes(),
+					Secret2: test.preimages[1].Bytes(),
+					Secret3: test.preimages[2].Bytes(),
+					Hash:    test.hashCheck[curveIndex].value.Bytes()}
+				_, err := ccThreeInputs.Verify(assignment)
+				if err != nil {
+					panic(err)
+				}
+			} else {
+				panic("unsupported number of preimages")
+			}
+		}
+	}
+}
+
+// /////////////////////////////////////////////////////////////////////////////
+//
+// zk-circuit definitions to run our tests on the MiMC hash function,
+// one that hashes one input and one that hashes three inputs.
+//
+// /////////////////////////////////////////////////////////////////////////////
+
+type CircuitMimcHashOneInput struct {
 	Secret frontend.Variable
 	Hash   frontend.Variable `gnark:",public"`
 }
 
-func (circuit *CircuitOneInput) Define(api frontend.API) error {
+func (circuit *CircuitMimcHashOneInput) Define(api frontend.API) error {
 	mimc, _ := mimc.NewMiMC(api)
 
 	mimc.Write(circuit.Secret)
@@ -221,14 +231,14 @@ func (circuit *CircuitOneInput) Define(api frontend.API) error {
 	return nil
 }
 
-type CircuitThreeInputs struct {
+type CircuitMimcHashThreeInputs struct {
 	Secret1 frontend.Variable
 	Secret2 frontend.Variable
 	Secret3 frontend.Variable
 	Hash    frontend.Variable `gnark:",public"`
 }
 
-func (circuit *CircuitThreeInputs) Define(api frontend.API) error {
+func (circuit *CircuitMimcHashThreeInputs) Define(api frontend.API) error {
 	mimc, _ := mimc.NewMiMC(api)
 
 	mimc.Write(circuit.Secret1)
@@ -241,4 +251,67 @@ func (circuit *CircuitThreeInputs) Define(api frontend.API) error {
 	api.AssertIsEqual(circuit.Hash, hash)
 
 	return nil
+}
+
+// /////////////////////////////////////////////////////////////////////////////
+//
+// Helper functions for compiling zk-circuits and creating proofs with gnark
+//
+// /////////////////////////////////////////////////////////////////////////////
+
+// CompiledCircuit is a compiled circuit with its proving and verifying keys
+type CompiledCircuit struct {
+	Ccs   constraint.ConstraintSystem
+	Pk    plonk.ProvingKey
+	Vk    plonk.VerifyingKey
+	Curve ecc.ID
+}
+
+// VerifiedProof is a proof and its witness, generated after verifying the proof
+type VerifiedProof struct {
+	Proof   plonk.Proof
+	Witness witness.Witness
+}
+
+func compileCircuit(circuit frontend.Circuit, curve ecc.ID) (
+	*CompiledCircuit, error) {
+	if curve != ecc.BN254 && curve != ecc.BLS12_381 {
+		return nil, fmt.Errorf("unsupported curve: %v", curve)
+	}
+	ccs, err := frontend.Compile(curve.ScalarField(), scs.NewBuilder, circuit)
+	if err != nil {
+		return nil, fmt.Errorf("error compiling circuit: %v", err)
+	}
+	srs, lagrangeSrs, err := unsafekzg.NewSRS(ccs)
+	if err != nil {
+		return nil, fmt.Errorf("error creating test SRS:  %v", err)
+	}
+	provingKey, verifyingKey, err := plonk.Setup(ccs, srs, lagrangeSrs)
+	if err != nil {
+		return nil, fmt.Errorf("error setting up Plonk: %v", err)
+	}
+	return &CompiledCircuit{ccs, provingKey, verifyingKey, curve}, nil
+}
+
+// Verify generates a proof from a circuit assignment and verifies it
+// using gnark
+func (cc *CompiledCircuit) Verify(assignment frontend.Circuit,
+) (*VerifiedProof, error) {
+	witness, err := frontend.NewWitness(assignment, cc.Curve.ScalarField())
+	if err != nil {
+		return nil, fmt.Errorf("error creating witness: %v", err)
+	}
+	publicInputs, err := witness.Public()
+	if err != nil {
+		return nil, fmt.Errorf("error creating public inputs: %v", err)
+	}
+	proof, err := plonk.Prove(cc.Ccs, cc.Pk, witness)
+	if err != nil {
+		return nil, fmt.Errorf("error creating Plonk proof: %v", err)
+	}
+	err = plonk.Verify(proof, cc.Vk, publicInputs)
+	if err != nil {
+		return nil, fmt.Errorf("error verifying Plonk proof: %v", err)
+	}
+	return &VerifiedProof{proof, witness}, nil
 }
